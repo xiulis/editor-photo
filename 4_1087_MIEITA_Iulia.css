@@ -1,0 +1,223 @@
+body {
+    background-color: #0F131A;
+}
+
+.application{
+    border: 1px dotted whitesmoke; 
+    background-color:#0F131A;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Goudy Bookletter 1911", sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-variant-caps:petite-caps;
+    color: whitesmoke;
+}
+
+.menu-option{
+    width: 90px;
+    height: 510px;
+    margin-left: 10px;
+    display: inline-block;
+    background-color:#0F131A;
+    border: 1px solid whitesmoke;
+}
+
+
+.editor-zone {
+    border: 2px whitesmoke dotted;
+    border-radius: 50px;
+    width: 500px;
+    height: 500px;
+    overflow: hidden; 
+    margin: 40px;
+    background-color: #0F131A;
+    color: whitesmoke;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-family: "Goudy Bookletter 1911", sans-serif;
+    font-size:12px;
+    letter-spacing: 2px;
+}
+
+
+
+#canvas {
+    margin-left: 20px;
+    margin-right:20px;
+    height: 510px;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+#canvas::-webkit-scrollbar{
+    width:12px;
+    height: 12px;
+}
+
+#canvas::-webkit-scrollbar-track{
+    background-color: transparent ;
+}
+
+#canvas::-webkit-scrollbar-corner{
+    background-color: transparent;
+}
+
+#canvas::-webkit-scrollbar-thumb{
+    background-color: whitesmoke;
+    border-radius: 30px;
+    border: 5px solid #0F131A ;
+}
+
+#canvas::-webkit-scrollbar-thumb:active{
+    background-color: rgb(137, 230, 137);
+}
+
+
+.editor-zone:hover {
+    opacity: 0.5;
+}
+
+i {
+    font-size: 25px;
+    text-align: center;
+    width: 100%;
+    padding-top: 40px;
+    padding-bottom: 10px;
+    color: seashell;
+}
+
+i:hover {
+    opacity: 40%;
+}
+
+
+.content:hover{
+    background-color: rgb(33, 33, 151);
+}
+
+.content div{
+    position: relative;
+    color: white;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    padding-bottom: 5px;
+    text-align: center;
+    opacity: 0.2;
+    visibility: hidden;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-family: "Goudy Bookletter 1911", sans-serif;
+    -webkit-transition: visibility 0s, opacity 0.5s linear; 
+    transition: visibility 0s, opacity 0.5s linear;
+   }
+
+.content:hover div {
+    visibility: visible;
+    opacity: 0.7; 
+}
+
+
+#editable{
+    border: 1px dotted seashell;
+}
+
+#editable:hover{
+    background-color:forestgreen;
+}
+
+.form{
+    height: fit-content;
+    width: fit-content;
+    padding: 10px;
+    border: 1px dashed whitesmoke;
+    background-color: #0F131A;
+    display:inline;
+}
+
+span {
+    display: inline;
+    padding-bottom: 7px;
+    font-weight: bolder;
+    text-transform: uppercase;
+    margin-right: 10px;
+}
+
+#height, #width {
+    width: 50px;
+    margin-right: 10px;
+}
+
+button{
+    background-color: #0276FF;
+    border-radius: 8px;
+    border-style: none;
+    box-shadow: rgba(255, 255, 255, 0.26) 0 1px 2px inset;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    display: inline;
+    font-size: 100%;
+    line-height: 1.15;
+    padding: 6px 10px;
+    font-weight: bolder;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#cancel {
+    background-color: red;
+    margin-left: 6px;
+}
+
+#cancelText {
+    background-color: red;
+    margin-left: 6px;
+}
+
+#btn-resize:hover {
+    background-color: rgb(90, 245, 90);
+}
+
+#size {
+    width: 50px;
+    height: 20px;
+    margin-right: 10px;
+}
+
+#color {
+    margin-right: 10px;
+    height: 20px;
+    width: 20px;
+}
+
+#views {
+    display: block;
+    position: absolute;
+    top:3px;
+} 
+
+#view-mode {
+    width: 80px;
+    display: flex;
+    position: sticky;
+    text-align: center;
+    color:white;
+    background-color:#0F131A;
+} 
+
+#x, #y {
+    margin-right: 5px;
+}
+
+
+
+
+
+
