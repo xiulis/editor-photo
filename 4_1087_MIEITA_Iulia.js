@@ -1,10 +1,9 @@
 
-//TODO: REFACTORING WITH ENCAPSULATION 
+//TODO: REFACTORING WITH ENCAPSULATION (too many global things)
 const c = document.getElementById("editable");
 const space = document.getElementsByClassName("editor-zone")[0];
 let myImage=null;
-let selectionMode=false; //daca sunt in mod selectie sau nu.
-let selection=null;
+let selectionMode=false; //daca sunt in mod selectie sau nu // strict pentru vizualizarea selectiei pe canvas
 
 ///incarcarea imaginii in canva
 space.addEventListener('dragover', (e)=>{
@@ -34,7 +33,6 @@ document.addEventListener("drop", function(e) {
 			c.height=height;
 			
             context.drawImage(img, 0, 0, width, height);
-			selection=context;
 			myImage=img;
 
 			//set view mode value 
@@ -48,28 +46,21 @@ document.addEventListener("drop", function(e) {
 
 })
 
-//TODO: Bug in fit mode la crop ... 
 
 //TODO: Put the canva in 100% mode before saving programatically to get the corect sizes to export 
 //icon de save
 const save = document.getElementById("save");
 save.onclick = function(){
-	const a = document.createElement('a'); //a = anchor
-	a.href=c.toDataURL('image/png',1);
-	a.download='image.png';
-	a.click();
+	if(myImage!=null){
+		const a = document.createElement('a'); //a = anchor
+		a.href=c.toDataURL('image/png',1);
+		a.download='image.png';
+		a.click();
+	} else {
+		alert("No image to download.")
+	}
 }
 
-
-//selection mode
-//select all la dublu click : TODO: select all
-// c.addEventListener('dblclick', ()=> {
-// 	selection = c.getContext("2d");
-// 	selection.lineWidth="4";
-// 	selection.setLineDash([5,5]);
-// 	selection.strokeStyle="green";
-// 	selection.strokeRect(0,0,c.width,c.height);
-// })
 
 //select particularizat
 c.onmousedown=getDimension;
@@ -158,36 +149,40 @@ let active=false;
 
 
 crop.addEventListener("click", () => {
-	if(rectangle.context==null){
-		//nu s-a facut nicio selectia sau a fost stearsa selectia 
-		alert("Select a zone before cropping!") 
+	if(myImage!=null) {
+		if(rectangle.context==null){
+			//nu s-a facut nicio selectia sau a fost stearsa selectia 
+			alert("Select a zone before cropping!") 
+		} else {
+			//proportii pentru crop (in mod 100% nu au effect, dar la fit image ajusteaza selectia)
+			ratioH = myImage.naturalHeight/c.height; 
+			ratioW = myImage.naturalWidth/c.width;
+
+			//dimensiunea este data de diferetele start-end in modul
+			c.width=Math.abs(rectangle.endX-rectangle.startX);
+			c.height=Math.abs(rectangle.endY-rectangle.startY);
+
+			//calculez punctul de start deoarece user-ul ar putea sa selecteze diferit de cum m-as astepta.
+			startX = Math.min(rectangle.startX, rectangle.endX);
+			startY = Math.min(rectangle.startY, rectangle.endY);
+			
+			//ajustare pentru mod fit-image (la 100% ratio=1, no problem)
+			startX=Math.round(ratioW*startX);
+			startY=Math.round(ratioH*startY);
+			c.width=Math.round(ratioW*c.width);
+			c.height=Math.round(ratioH*c.height);
+
+			rectangle.context.drawImage(myImage, startX,startY,c.width,c.height, 0,0, c.width, c.height);
+			
+			myImage.height=c.height;
+			myImage.width=c.width;	
+			myImage.src=c.toDataURL();
+		
+			//invalidez selectia ca sa nu se poata face crop din nou
+			rectangle.context=null; 
+		}
 	} else {
-		//proportii pentru crop (in mod 100% nu au effect, dar la fit image ajusteaza selectia)
-		ratioH = myImage.naturalHeight/c.height; 
-		ratioW = myImage.naturalWidth/c.width;
-
-		//dimensiunea este data de diferetele start-end in modul
-		c.width=Math.abs(rectangle.endX-rectangle.startX);
-		c.height=Math.abs(rectangle.endY-rectangle.startY);
-
-		//calculez punctul de start deoarece user-ul ar putea sa selecteze diferit de cum m-as astepta.
-		startX = Math.min(rectangle.startX, rectangle.endX);
-		startY = Math.min(rectangle.startY, rectangle.endY);
-		
-		//ajustare pentru mod fit-image (la 100% ratio=1, no problem)
-		startX=Math.round(ratioW*startX);
-		startY=Math.round(ratioH*startY);
-		c.width=Math.round(ratioW*c.width);
-		c.height=Math.round(ratioH*c.height);
-
-		rectangle.context.drawImage(myImage, startX,startY,c.width,c.height, 0,0, c.width, c.height);
-		
-		myImage.height=c.height;
-		myImage.width=c.width;	
-		myImage.src=c.toDataURL();
-	
-		//invalidez selectia ca sa nu se poata face crop din nou
-		rectangle.context=null; 
+		alert("Please upload a picture first.")
 	}
 })
 
@@ -197,55 +192,62 @@ crop.addEventListener("click", () => {
 const resize= document.getElementById("resize");
 
 resize.onclick=function(){
-	const f = document.getElementById("form-size");
-	f.style.display="block";
-	f.style.position="absolute";
-	dragElement(f);
+	if(myImage!=null){
+		const f = document.getElementById("form-size");
+		f.style.display="block";
+		f.style.position="absolute";
+		dragElement(f);
 
-	const h = document.getElementById("height");
-	const w = document.getElementById("width");
+		const h = document.getElementById("height");
+		const w = document.getElementById("width");
 
-	height = c.height;
-	width = c.width;
-	h.value=height;
-	w.value=width;
+		height = c.height;
+		width = c.width;
+		h.value=height;
+		w.value=width;
 
-	document.getElementById('cancel').addEventListener('click', ()=> {
-		f.style.display="none";
-	})
-	document.getElementById('btn-resize').addEventListener('click', (e)=> {
-		
-		if((h.value>=1) && (w.value>=1)) {
+		document.getElementById('cancel').addEventListener('click', ()=> {
 			f.style.display="none";
-			myImage.height=h.value;
-			myImage.width=w.value;
-			const context =c.getContext('2d');
-			c.width=myImage.width;
-			c.height=myImage.height;
-			context.drawImage(myImage, 0,0, c.width, c.height);
-			myImage.src=c.toDataURL();
-		}
-		else {
-			e.stopImmediatePropagation();
-    		e.preventDefault();
-			alert("Valoarea specificata trebuie sa fie mai mare ca 0.")
-		}
-	})
+		})
+		document.getElementById('btn-resize').addEventListener('click', (e)=> {
+			
+			if((h.value>=1) && (w.value>=1)) {
+				f.style.display="none";
+				myImage.height=h.value;
+				myImage.width=w.value;
+				const context =c.getContext('2d');
+				c.width=myImage.width;
+				c.height=myImage.height;
+				context.drawImage(myImage, 0,0, c.width, c.height);
+				myImage.src=c.toDataURL();
+			}
+			else {
+				e.stopImmediatePropagation();
+				e.preventDefault();
+				alert("Valoarea specificata trebuie sa fie mai mare ca 0.")
+			}
+		})
 
-	//calculez valoarea latimii, la modificarea inaltimii (pastrand proportiile) // la dimensiuni atomice se deformeaza
-	h.oninput=function(){
-		w.value = Math.round(width*(h.value/height)); 
+		//calculez valoarea latimii, la modificarea inaltimii (pastrand proportiile) // la dimensiuni atomice se deformeaza
+		h.oninput=function(){
+			w.value = Math.round(width*(h.value/height)); 
+		}
+
+		//calculez valoarea inaltimii, la modificarea latimii (pastrand proportiile) //la dimensiuni atomice se deformeaza
+		w.oninput=function(){
+			h.value=Math.round(height*(w.value/width));
+		}	
+	} else {
+		alert("Please upload a picture first.")
 	}
-
-	//calculez valoarea inaltimii, la modificarea latimii (pastrand proportiile) //la dimensiuni atomice se deformeaza
-	w.oninput=function(){
-		h.value=Math.round(height*(w.value/width));
-	}	
 }
 
-//icon text TODO:find a way to get where someone wants to put the text
-
+//icon text 
+//TODO: try to do it smarter, please. it's too basic.
 const text= document.getElementById("addText");
+let ctxText;
+let myText;
+
 text.onclick= function(e) {
 	if(myImage!=null){
 		///form de text;
@@ -280,39 +282,50 @@ text.onclick= function(e) {
 
 				ctx.fillText(inputText.value, c.width/2, c.height/2);
 
+				//afisez al doilea form
 				const position=document.getElementById("form-position");
 				position.style.display="block";
 				position.style.position="absolute";
+				
 				dragElement(position);
 
+				//iau controalele de tip input pentru pozitii
+				const x= document.getElementById("x");
+				const y=document.getElementById("y");
 				
-				//myImage.src=c.toDataURL();
+				//le setez valoarea
+				x.value=c.width/2;
+				y.value=c.height/2;
+
+				x.onchange=moveText;
+				y.onchange=moveText;
+
+				function moveText(){
+					//redesenez pentru fiecare modificare, super dezamagita de eficienta implementarii
+					ctx.drawImage(myImage, 0,0,myImage.width, myImage.height, 0,0, c.width, c.height);
+					ctx.fillText(inputText.value, x.value, y.value);
+				}
+
+				document.getElementById("btn-confirm").onclick = function() {
+					position.style.display="none";		
+					myImage.src=c.toDataURL();
+				}
 			}
 			else{
 				alert("All fields must be completed.")
 			}
-		})
-
-		const x= document.getElementById("x");
-				const y=document.getElementById("y");
-				x.value=c.width/2;
-				y.value=c.height/2;
-
-				function moveText(){
-					console.log("movetext");
-					console.log(ctx, inputText.value, x.value, y.value)
-					ctx.fillText(inputText.value, x.value, y.value);
-				}
-				
-				x.oninput= moveText();
-				y.oninput=moveText();
-				
+		})		
 	}
 
 	else {
 		alert("Upload image first");
 	}
+
+	
 }
+
+
+
 
 //TODO: BUG LA IMAGINI SUPER MICI INCARCATE, SE MARESTE IMAGINEA.
 // It's not a bug, it's a feature. :)
@@ -348,8 +361,6 @@ select.addEventListener("change", (e)=> {
 
 
 //////////////////////////////stole - TODO: refactoring 
-
-
 function dragElement(elmnt) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   if (document.getElementById(elmnt.id + "header")) {
@@ -391,5 +402,4 @@ function dragElement(elmnt) {
   }
 }
 
-//const selector =document.getElementById("view_mode");
 
