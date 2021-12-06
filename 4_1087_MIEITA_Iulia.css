@@ -216,6 +216,33 @@ button{
     margin-right: 5px;
 }
 
+#menu-effects{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-right: 10px;
+    height: 200px;
+    
+}
+
+.effect {
+   font-size: xx-small;
+}
+
+.effect:hover{
+    background-color: green;
+}
+
+.undo {
+    font-size: xx-small;
+    margin-top: 30px;
+    width: fit-content;
+}
+
+.undo:hover {
+    background-color: rgb(105, 9, 9);
+}
+
 
 
 

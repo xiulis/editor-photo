@@ -1,4 +1,6 @@
 
+"use strict"
+
 //TODO: REFACTORING WITH ENCAPSULATION (too many global things)
 const c = document.getElementById("editable");
 const space = document.getElementsByClassName("editor-zone")[0];
@@ -15,15 +17,11 @@ space.addEventListener('dragover', (e)=>{
 document.addEventListener('dragover', function(e){e.preventDefault();})
 document.addEventListener("drop", function(e) {
     e.preventDefault();
-	console.log("e target"+e.target)
 	var files = e.dataTransfer.files;
 	const reader = new FileReader();
-	console.log(files);
 	reader.addEventListener('load', function (e) {
 		const img = document.createElement('img') 
-		console.log("image render");
 		img.addEventListener('load', function(){
-			console.log("functia de load")
 			var width = img.naturalWidth;
 			var height = img.naturalHeight;
 		
@@ -36,9 +34,17 @@ document.addEventListener("drop", function(e) {
 			myImage=img;
 
 			//set view mode value 
+			console.log("load;");
 			const select = document.getElementById("view-mode");
-			select.value="scrollable"; 		
+			select.value="scrollable"; 
 			
+			//set selection to the whole canvas
+			rectangle.startX=0;
+			rectangle.startY=0;
+			rectangle.endX=myImage.width;
+			rectangle.endY=myImage.height;
+			rectangle.status="active";
+			rectangle.context=context;			
 		})
 		img.setAttribute('src', e.target.result);
 	})
@@ -46,12 +52,15 @@ document.addEventListener("drop", function(e) {
 
 })
 
-
-//TODO: Put the canva in 100% mode before saving programatically to get the corect sizes to export 
 //icon de save
 const save = document.getElementById("save");
 save.onclick = function(){
 	if(myImage!=null){
+		if(select.value!="scrollable") {
+			//ma asigur ca salvez la calitatea cea mai buna.
+			select.value="scrollable";
+			changeView();
+		}
 		const a = document.createElement('a'); //a = anchor
 		a.href=c.toDataURL('image/png',1);
 		a.download='image.png';
@@ -61,6 +70,16 @@ save.onclick = function(){
 	}
 }
 
+
+//my selection
+const rectangle = {
+	startX: null,
+	startY: null,
+	endX:null,
+	endY:null,
+	context:null,
+	status:null	
+}
 
 //select particularizat
 c.onmousedown=getDimension;
@@ -76,16 +95,6 @@ document.addEventListener("keydown", function(e){
 })
 
 
-//my selection
-const rectangle = {
-	startX: null,
-	startY: null,
-	endX:null,
-	endY:null,
-	context:null,
-	status:null	
-}
-
 function deleteSelection() {
 	if(rectangle.context!=null){
 		rectangle.context.fillStyle="white";
@@ -98,20 +107,21 @@ function deleteSelection() {
 
 function getDimension(e){
 
-	if(e.type=="mouseup"){
+	if(e.type==="mouseup"){
 		selectionMode=false;
 		rectangle.endX=e.offsetX;
 		rectangle.endY=e.offsetY;
 		drawSelection(e);	
 	}
-	if(e.type=="mousedown"){
+	if(e.type==="mousedown"){
+			rectangle.context=null;
 			c.style.cursor="crosshair"
 			rectangle.startY=e.offsetY;
 			rectangle.startX=e.offsetX;
 			selectionMode=true;
 	}
 	//tratez si acest event pentru ca vreau sa desenez continuu forma selectiei
-	if(e.type="mousemove"&&selectionMode){
+	if(e.type==="mousemove"&&selectionMode){
 			rectangle.endX=e.offsetX;
 			rectangle.endY=e.offsetY;
 			drawSelection(e);
@@ -119,9 +129,7 @@ function getDimension(e){
 }
 
 function drawSelection(e){
-	console.log("drawing");
-	if(rectangle.context!=null)
-	{	
+	if(rectangle.context!=null) {	
 		if(selectionMode){
 			rectangle.context.strokeStyle="green";
 			
@@ -129,8 +137,8 @@ function drawSelection(e){
 			rectangle.context.strokeStyle="white";
 			rectangle.status="active"; ////se poate sterge daca exista un context valid (press d)	
 		}
-		//rectangle.context.drawImage(myImage, 0, 0, myImage.width, myImage.height);
 		rectangle.context.drawImage(myImage, 0, 0, myImage.naturalWidth, myImage.naturalHeight, 0,0, c.width, c.height);
+		//rectangle.context.save(); //TODO: POSIBLE ERROR
 		rectangle.context.strokeRect(rectangle.startX,rectangle.startY,rectangle.endX-rectangle.startX,rectangle.endY-rectangle.startY);
 	
 	} else { //i am getting the same context, this part works only for mouse down (primul mouse move)
@@ -143,11 +151,7 @@ function drawSelection(e){
 }
 
 //icon crop = selectie activa - crop apasat - change canva
-
 const crop = document.getElementById("crop");
-let active=false;
-
-
 crop.addEventListener("click", () => {
 	if(myImage!=null) {
 		if(rectangle.context==null){
@@ -155,16 +159,16 @@ crop.addEventListener("click", () => {
 			alert("Select a zone before cropping!") 
 		} else {
 			//proportii pentru crop (in mod 100% nu au effect, dar la fit image ajusteaza selectia)
-			ratioH = myImage.naturalHeight/c.height; 
-			ratioW = myImage.naturalWidth/c.width;
+			let ratioH = myImage.naturalHeight/c.height; 
+			let ratioW = myImage.naturalWidth/c.width;
 
 			//dimensiunea este data de diferetele start-end in modul
 			c.width=Math.abs(rectangle.endX-rectangle.startX);
 			c.height=Math.abs(rectangle.endY-rectangle.startY);
 
 			//calculez punctul de start deoarece user-ul ar putea sa selecteze diferit de cum m-as astepta.
-			startX = Math.min(rectangle.startX, rectangle.endX);
-			startY = Math.min(rectangle.startY, rectangle.endY);
+			let startX = Math.min(rectangle.startX, rectangle.endX);
+			let startY = Math.min(rectangle.startY, rectangle.endY);
 			
 			//ajustare pentru mod fit-image (la 100% ratio=1, no problem)
 			startX=Math.round(ratioW*startX);
@@ -190,7 +194,6 @@ crop.addEventListener("click", () => {
 
 //icon resize
 const resize= document.getElementById("resize");
-
 resize.onclick=function(){
 	if(myImage!=null){
 		const f = document.getElementById("form-size");
@@ -201,8 +204,8 @@ resize.onclick=function(){
 		const h = document.getElementById("height");
 		const w = document.getElementById("width");
 
-		height = c.height;
-		width = c.width;
+		let height = c.height;
+		let width = c.width;
 		h.value=height;
 		w.value=width;
 
@@ -245,12 +248,10 @@ resize.onclick=function(){
 //icon text 
 //TODO: try to do it smarter, please. it's too basic.
 const text= document.getElementById("addText");
-let ctxText;
-let myText;
-
 text.onclick= function(e) {
 	if(myImage!=null){
 		///form de text;
+		rectangle.context=null;
 		const f = document.getElementById("form-text");
 		f.style.display="block";
 		f.style.position="absolute";
@@ -325,15 +326,13 @@ text.onclick= function(e) {
 }
 
 
-
-
 //TODO: BUG LA IMAGINI SUPER MICI INCARCATE, SE MARESTE IMAGINEA.
 // It's not a bug, it's a feature. :)
 const select = document.getElementById("view-mode");
-select.addEventListener("change", (e)=> {
-	//console.log("change",e.target)
+select.onchange=changeView;
+function changeView() {
 	if(myImage!=null) {
-		if(select.value=="scrollable"){
+		if(select.value==="scrollable"){
 			c.width=myImage.naturalWidth;
 			c.height=myImage.naturalHeight;
 
@@ -341,7 +340,7 @@ select.addEventListener("change", (e)=> {
 			ctx.drawImage(myImage, 0,0, c.width, c.height);
 			rectangle.context=null;
 		}
-		if(select.value=="fit") {
+		if(select.value==="fit") {
 			
 			//fortez pentru estetica aplicatiei dimensionarea pe inaltime
 			c.width=Math.round(myImage.width*(500/myImage.height));
@@ -349,6 +348,7 @@ select.addEventListener("change", (e)=> {
 
 			const ctx = c.getContext("2d");
 			ctx.drawImage(myImage, 0,0, myImage.naturalWidth,myImage.naturalHeight,0,0, c.width, c.height);
+			//TODO: bug redraws badly
 			rectangle.context=null;
 		}
 	}
@@ -356,8 +356,212 @@ select.addEventListener("change", (e)=> {
 		alert("Upload an image first!");
 		select.value="scrollable";
 	}
+}
+
+
+//icon effect
+const effect=document.getElementById("addEffect");
+effect.addEventListener("click", function() {
+	if(myImage!=null) {
+		const menu=document.getElementById("menu-effects");
+		if(menu.style.display==="none"){
+			menu.style.display="flex";
+		} else {
+			menu.style.display="none"
+		}
+
+		const grey = document.getElementById("gray");
+		const bright = document.getElementById("bright");
+		const dark = document.getElementById("dark");
+		const sharp = document.getElementById("sharpen");
+		const sobel = document.getElementById("sobel");
+		const undo =document.getElementById("undo");
+
+		grey.onclick= greyEffect;
+		bright.onclick= brightEffect;
+		dark.onclick= brightEffect;
+		sobel.onclick= sobelEffect;
+		sharp.onclick= sharpeningEffect;
+
+		undo.onclick = function() {
+			menu.style.display="none"
+			//rectangle.context.restore();
+		}
+	} else {
+		alert('Upload an image first.');
+	}
 })
 
+//TODO: Refactoring. Foloseste asta si la crop. Cod duplicat.
+//De fapt mai destept ar fi sa faci tu corectia oricum in rectangle.
+function calculatePoints(){
+	let startX =  Math.min(rectangle.startX, rectangle.endX);
+	let startY = Math.min(rectangle.startY, rectangle.endY);
+
+	let widthX = Math.abs(rectangle.startX-rectangle.endX);
+	let widthY = Math.abs(rectangle.startY-rectangle.endY);
+
+	return {startX, startY, widthX, widthY};
+}
+
+function greyEffect() {
+	if(rectangle.context!=null){
+		let selection= calculatePoints();
+		rectangle.context.drawImage(myImage,0,0, myImage.width, myImage.height,0,0, c.width, c.height);
+		const pixels = rectangle.context.getImageData(selection.startX,selection.startY, selection.widthX, selection.widthY);
+		for(let i=0; i<pixels.data.length; i+=4)
+		{
+			let r = pixels.data[i];
+			let g= pixels.data[i+1];
+			let b=  pixels.data[i+2];
+			let corectie = (r + g + b)/3;
+			pixels.data[i] = pixels.data[i+1] =pixels.data[i+2]= corectie;
+		}
+		rectangle.context.data=pixels.data;
+		rectangle.context.putImageData(pixels,selection.startX,selection.startY,0,0,selection.widthX, selection.widthY);
+		rectangle.context.save();
+		myImage.src=c.toDataURL();
+	}
+}
+
+function checkRGB(data) {
+	if(data>255){
+		data=255;
+	} else {
+		if(data<0){
+			data=0
+		}
+	}
+	return data;
+}
+
+function brightEffect(e) {
+	if(rectangle.context!=null){
+		let selection= calculatePoints();
+		rectangle.context.drawImage(myImage,0,0, myImage.width, myImage.height,0,0, c.width, c.height);
+		//TODO: CHECK IF WIDTHS DIFFERENT OF 0, if not crapa getImageData.
+		const pixels = rectangle.context.getImageData(selection.startX,selection.startY, selection.widthX, selection.widthY);
+		let value=-10;
+		if(e.srcElement.id==="bright") {
+			value=10; }
+		for(let i=0; i<pixels.data.length; i+=4){
+			pixels.data[i] += value; 
+			pixels.data[i+1]+= value;
+			pixels.data[i+2]+= value;
+			
+			pixels.data[i]=checkRGB(pixels.data[i]);
+			pixels.data[i+1]=checkRGB(pixels.data[i+1]);
+			pixels.data[i+2]=checkRGB(pixels.data[i+2]);
+		}
+		rectangle.context.data=pixels.data;
+		rectangle.context.putImageData(pixels,selection.startX,selection.startY,0,0,selection.widthX, selection.widthY);
+		myImage.src=c.toDataURL();
+	}
+}
+
+function sharpeningEffect(){
+	if(rectangle.context!=null){
+		rectangle.context.drawImage(myImage,0,0, myImage.width, myImage.height,0,0, c.width, c.height);
+		//const pixels = ctx.getImageData(0,0,c.width, c.height); //whole image
+		let selection = calculatePoints();
+		const pixels = rectangle.context.getImageData(selection.startX,selection.startY, selection.widthX, selection.widthY);
+		let effect = convolute(pixels, [0, -1, 0, -1, 5, -1, 0, -1, 0], false);
+		
+
+		let image = rectangle.context.createImageData(effect.width, effect.height);
+		for(let i=0;i<image.data.length;i+=4){
+			//let value=  Math.abs(effect.data[i])
+			image.data[i]+=Math.abs(effect.data[i]);
+			image.data[i+1] += Math.abs(effect.data[i+1]);
+			image.data[i+2]+= Math.abs(effect.data[i+2]);
+			image.data[i+3]+= 255;
+		}
+
+		rectangle.context.putImageData(image,selection.startX,selection.startY);
+		myImage.src = c.toDataURL();
+	}
+}
+
+
+function convolute(image, array, opaque){
+	var side = Math.round(Math.sqrt(array.length));
+	var halfside = Math.floor(side/2);
+
+	const src= image.data;
+	const sw = image.width;
+	const sh = image.height;
+
+	const w = sw;
+	const h = sh;
+
+	var output = {
+		width: w, height:h, data: new Float32Array(w*h*4)
+	};
+
+	const pixels = output.data;
+
+	for(let y=0;y<h;y++){
+		for(let x=0;x<w;x++){
+			let sy=y;
+			let sx=x;
+			const inter = (y*w+x)*4;
+			let r=0, g=0, b=0, a=0;
+			for(let cy=0;cy<side;cy++){
+				for(let cx=0;cx<side;cx++){
+
+					let scy = sy+cy -halfside;
+					let scx = sx+cx - halfside;
+
+					let srcOff = (scy *sw +scx)*4;
+
+					const wt = array[cy*side+cx];
+
+					r+= src[srcOff] * wt;
+					g+= src[srcOff+1] * wt;
+					b+= src[srcOff+2] * wt;
+					a+= src[srcOff+3] * wt;
+				}
+			}
+			
+			pixels[inter] =r;
+			pixels[inter+1] =g;
+			pixels[inter+2] =b;
+			pixels[inter+3] =a;
+		}
+	}
+
+	return output;
+}
+
+
+
+//convolution filter, we have to mix 
+//TODO: Selection shape gets in the way... after applying the effect on a zone, then on the whole image..
+function sobelEffect(){
+	rectangle.context.drawImage(myImage,0,0, myImage.width, myImage.height,0,0, c.width, c.height);
+	//greyEffect();
+	//const pixels = ctx.getImageData(0,0,c.width, c.height); //whole image
+	let selection = calculatePoints();
+	const pixels = rectangle.context.getImageData(selection.startX,selection.startY, selection.widthX, selection.widthY);
+	let vertical = convolute(pixels, [-1, 0, 1, -2, 0, 2, -1, 0, 1], false);
+	let horizontal = convolute(pixels, [-1, -2, -1, 0, 0, 0, 1, 2, 1], false);
+	//create Imagedata ?
+
+	let image = rectangle.context.createImageData(vertical.width, vertical.height);
+	for(let i=0;i<image.data.length;i+=4){
+		let v=  Math.abs(vertical.data[i])
+		image.data[i]=v;
+		let h = Math.abs(horizontal.data[i]);
+
+		image.data[i+1] = h;
+		image.data[i+2]= (v+h)/4;
+		image.data[i+3]= 255;
+	}
+
+	rectangle.context.putImageData(image,selection.startX,selection.startY);
+	myImage.src = c.toDataURL();
+	
+}
 
 
 //////////////////////////////stole - TODO: refactoring 
